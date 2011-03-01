@@ -1,4 +1,4 @@
-:- include('./libs/listlib.pl').
+:- include('listlib.pl').
 
 listToNumberAll([First | Tail], Number) :-
 	((
@@ -44,11 +44,19 @@ makeAnsList(NumList, Result, Formula) :-
 	shatter(NumList, SubList),
 	maplist(listToNumberAll, SubList, List),
 	formula(List, Formula),
-	catch(Result is Formula, _, fail).
+	catch(Result_t is Formula, _, fail),
+	Result =:= Result_t,
+	!.
 
 makeAns(Num, Result, Formula) :-
 	n2l(Num, NumList),
 	makeAnsList(NumList, Result, Formula).
+
+write_num(Num, OS) :-
+	forall(member(X, Num),
+		write(OS, X)),
+	nl(OS),
+	writeln(Num).
 
 main(N) :-
 	open('m100.log', write, OS),
@@ -57,8 +65,7 @@ main(N) :-
 	get_set(NumList, Nums,
 			[0,1,2,3,4,5,6,7,8,9]),
 	\+makeAnsList(NumList, 100, _),
-	write(OS, NumList), nl(OS),
-	writeln(NumList),
+	write_num(NumList, OS),
 	fail
 	;
 	close(OS)
