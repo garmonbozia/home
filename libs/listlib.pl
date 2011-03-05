@@ -37,6 +37,7 @@ listToNumber([H | Tail], A, X) :-
 	Anew is A * 10 + H,
 	listToNumber(Tail, Anew, X).
 
+numberToList(0, [0]) :- !.
 numberToList(X, List) :-
 	num_length(X, N),
 	numberToList(X, List, N).
