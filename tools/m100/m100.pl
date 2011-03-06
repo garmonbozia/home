@@ -64,7 +64,8 @@ main(N) :-
 	length(Nums, N),
 	get_set(NumList, Nums,
 			[0,1,2,3,4,5,6,7,8,9]),
-	\+makeAnsList(NumList, 100, _),
+	listToNumber(NumList, Num),
+	\+makeAns(Num, 100, _),
 	write_num(NumList, OS),
 	fail
 	;
