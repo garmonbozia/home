@@ -1,4 +1,4 @@
-:- include('listlib.pl').
+:- include('../../libs/listlib.pl').
 
 listToNumberAll([First | Tail], Number) :-
 	((
@@ -45,8 +45,7 @@ makeAnsList(NumList, Result, Formula) :-
 	maplist(listToNumberAll, SubList, List),
 	formula(List, Formula),
 	catch(Result_t is Formula, _, fail),
-	Result =:= Result_t,
-	!.
+	Result =:= Result_t.
 
 makeAns(Num, Result, Formula) :-
 	n2l(Num, NumList),
