@@ -1,55 +1,58 @@
-#include <stdio.h>
-#include <queue>
+#ifndef MQUEUE_H
+#define MQUEUE_H
 
-using namespace std;
+#include <list>
+#define VARIANT2
 
-template<class T> class mQueue : private queue<T>
+template<class T> class mQueue
 {
 public:
-	void mpush(T& x)
-	{   
-		bool MATCH = false;
-		int i      = 0;
-                   
-		while(i < queue<T>::size())
-        {   
-			if(x == queue<T>::front())
-			{   
-				MATCH = true;
-				queue<T>::push(x);
-			}   
-            else
-				queue<T>::push(queue<T>::front());
-			queue<T>::pop();
+	int push( T new_item )
+	{
+		typename std::list<T>::iterator i = data_.begin();
+
+		while ( i != data_.end() )
+		{
+			if ((*i) == new_item)
+			{
+				break;
+			}
 			i++;
-		}   
-		if(!MATCH)
-			queue<T>::push(x);
-	}   
+		}
 
-	void mpop()
-	{   
-		queue<T>::pop();
-	}   
+		if ( i != data_.end() )
+		{
 		
-	T& mfront()
-	{   
-		return queue<T>::front();
-	}   
+#ifdef VARIANT1
+			return -1;
+#else
+			(*i) = new_item;
+#endif		
+		}
+		else
+		{
+			data_.push_back(new_item);
+		}
 
-	T& mback()
-	{   
-		return queue<T>::back();
-	}  
-
-	bool mempty()
-	{
-		return queue<T>::empty();
+		return 0;
 	}
 
-	unsigned int msize ()
+	T pop(void)
 	{
-		return queue<T>::size();
+		T temp;
+		temp = data_.front();
+		data_.pop_front();
+
+		return temp;
 	}
-		
+	
+	bool empty(void)
+	{
+		return data_.empty();
+	}
+
+private:
+	std::list<T> data_;
 };
+
+#endif

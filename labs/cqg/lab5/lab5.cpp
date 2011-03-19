@@ -1,18 +1,13 @@
 #include <iostream>
-#include <map>
-#include <string>
-#include <cctype>
-#include <queue>
 
 #include "wcomplex.h"
 #include "mqueue.h"
 
-using namespace std;
-
+using std::cout;
+using std::endl;
 
 int main()
 {
-	//creating some wComplex elements
 	wComplex A(1, 2);
 	wComplex B(2, 4);
 	wComplex C(0, 9);
@@ -21,31 +16,28 @@ int main()
 	wComplex F(2, 7);
 	wComplex G(7, 2); // F == G
 
-	mQueue<wComplex> dq;
-	cout << "\n\nEmpty dq. size= " << dq.msize() << endl;
-	dq.mpush(A);
-	dq.mpush(B);
-	dq.mpush(C);
-	dq.mpush(D);
-	cout << "dq.size= " << dq.msize() << endl;
-	dq.mpush(E);
-	cout << "Equal element pushed, dq.size= " << dq.msize() << endl;
-	dq.mpush(F);
-	dq.mpush(G);
-	cout << "7 elements pushed, 2 of them are equal to some another, " <<
-		"so final size= " << dq.msize() << endl;
-		
-	cout << "\n dq elements:\n";
-	wComplex tmp;
+	if(E == A) 
+		cout << "E == A" << endl;
 
-	// all dq.elements are pushed
-	while(!dq.mempty())
+	mQueue<wComplex> dq;
+	cout << "pushing elements..." << endl;
+	dq.push(A);
+	dq.push(B);
+	dq.push(C);
+	dq.push(D);
+	dq.push(E);
+	dq.push(F);
+	dq.push(G);
+	cout << "complete\n" << endl;
+	
+	wComplex tmp;
+	cout << "poping all elements..." << endl;
+	while(!dq.empty())
 	{
-		tmp = dq.mfront();
+		tmp = dq.pop();
 		tmp.print();
-		dq.mpop();
 	}
-	cout << "dq is empty, size= " << dq.msize() << endl;
+	cout << "complete\n" << endl;
 	
 	return 0;
 }

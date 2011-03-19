@@ -13,7 +13,7 @@ public:
 	wComplex();
 	wComplex(double R);
 	wComplex(double R, double I);
-	void operator=(wComplex &);
+	void operator=(wComplex);
 	bool operator==(wComplex &);
 	void print();
 };
@@ -34,7 +34,7 @@ wComplex::wComplex(double R, double I)
 	imagePart = I;
 }
 
-void wComplex::operator=(wComplex &El)
+void wComplex::operator=(wComplex El)
 {
 	realPart  = El.realPart;
 	imagePart = El.imagePart;
