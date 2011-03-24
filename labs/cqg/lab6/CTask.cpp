@@ -1,7 +1,7 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
 #include <CTask.hpp>
 
@@ -44,12 +44,13 @@ void CTask::doOperation ( const char * output_file )
 
 	if ( operation_.first == kFind )
 	{
-		i            = std::find( data_.begin()
-		                        , data_.end()
-								, operation_.second );
-		int position = std::distance (data_.begin (), i) + 1;
+		int position = std::distance( data_.begin ()
+		                            , std::find( data_.begin()
+		                                       , data_.end()
+		                                       , operation_.second )
+		                            );
 		
-		if ( position <= data_.size() )
+		if ( position < data_.size() )
 		{
 			result    << position << std::endl;
 			std::cout << position << std::endl;
@@ -65,8 +66,7 @@ void CTask::doOperation ( const char * output_file )
 	{
 		int count_ = (int) std::count( data_.begin()
 		                             , data_.end()
-									 , operation_.second
-									 );
+		                             , operation_.second );
 
 		if ( count_ > 0 )
 		{
