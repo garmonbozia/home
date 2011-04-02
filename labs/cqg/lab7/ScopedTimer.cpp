@@ -13,7 +13,7 @@ public:
     {
         gettimeofday( &timeStart, NULL );
         pt2Func = fun;
-        printf( "CONSTRUCTED\n" );
+        printf( "ScopedTimer: constructed\n" );
     }
 
     ~ScopedTimer ( )
@@ -22,7 +22,7 @@ public:
 	    timeTotal = (timeFinish.tv_sec  - timeStart.tv_sec )*1000000
 			      + (timeFinish.tv_usec - timeStart.tv_usec);
         (* pt2Func) ( timeTotal ); 
-        printf( "DESTRUCTED\n" );
+        printf( "ScopedTimer: destructed\n" );
     }
 
 private:
