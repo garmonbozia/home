@@ -1,7 +1,7 @@
 #include "stdio.h"
 #include <memory>
 #include "ScopedTimer.cpp"
-#include "mIStream.cpp"
+#include "File.cpp"
 
 void printTime ( const double Time )
 {
@@ -12,7 +12,7 @@ void printTime2File ( const double Time)
 {
     char msg [100];
     sprintf( msg, "Total scope_life time= %0.2f usecs\n", Time );
-    mIStream out_file( "times.log" );
+    File out_file( "times.log" );
     out_file.write( msg );
 }
 
@@ -27,7 +27,7 @@ int main ( )
 
 /// task2 (testing mIStream)
     {
-        mIStream out_file( "output" );
+        File out_file( "output" );
         out_file.write( "test message" );
     }
     printf( "out of scope\n\n" );
