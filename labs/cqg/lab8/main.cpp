@@ -1,33 +1,32 @@
-#include "stdio.h"
-#include <memory>
+#include <sstream>
+#include <boost/random.hpp>
+
 #include "ScopedTimer.cpp"
 #include "File.cpp"
-//#include "shit.cpp"
 #include "OHLCAggregator.cpp"
-#include <boost/random.hpp>
 
 void printTime ( const double Time )
 {
-    printf( "Total scope_life time= %0.2f usecs\n", Time );
+    std::cout << "Total scope_life time= " << Time << " usecs" << std::endl;
 }
 
 void printTime2File ( const double Time )
 {
-    char msg [100];
-    sprintf( msg, "Total scope_life time= %0.2f usecs\n", Time );
+    std::stringstream msg;
+    msg << "Total scope_life time= " << Time << " usecs" << std::endl;
     File out_file( "times.log" );
-    out_file.write( msg );
+    out_file.write( ( msg.str( ) ).c_str( ) );
 }
 
-void printOHLC2File ( const double O,
-                      const double H,
-                      const double L,
-                      const double C )
+void printOHLC2File ( const OHLC_t ohlc )
 {
-    char msg [100];
-    sprintf( msg, "O= %f, H= %f, L= %f, C= %f\n", O, H, L, C );
+    std::stringstream msg;
+    msg << "O= " << ohlc.Open  << ", ";
+    msg << "H= " << ohlc.High  << ", ";
+    msg << "L= " << ohlc.Low   << ", ";
+    msg << "C= " << ohlc.Close << std::endl;
     File out_file( "OHLC.log" );
-    out_file.write( msg );
+    out_file.write( msg.str( ).data( ) );
 }
 
 void task1 ( )
@@ -37,7 +36,7 @@ void task1 ( )
         ScopedTimer timer ( printTime );
         for ( int i=0; i < 1000000; i++ ) continue;
     }
-    printf( "out of scope\n\n" );
+    std::cout << "out of scope\n" << std::endl;
 }
 
 void task2 ( )
@@ -46,7 +45,7 @@ void task2 ( )
         ScopedTimer timer ( printTime );
         for ( int i=0; i < 1000000; i++ ) continue;
     }
-    printf( "out of scope\n\n" );
+    std::cout << "out of scope\n" << std::endl;
 }
 
 void task3 ( )

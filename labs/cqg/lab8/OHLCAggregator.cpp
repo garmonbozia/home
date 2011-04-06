@@ -7,20 +7,18 @@
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 
-/*
-class OHLC
+struct OHLC_t
 {
-    double Open,
-    double High,
-    double Low,
-    double Close
+    double Open;
+    double High;
+    double Low;
+    double Close;
 };
-*/
 
 class OHLCAggregator
 {
 public:
-    OHLCAggregator ( void fun ( double, double, double, double ), const double timeSec ) : 
+    OHLCAggregator ( void fun ( OHLC_t ), const double timeSec ) : 
         timeout( timeSec ),
         print_function( fun ),
         timer_( new boost::timer )
@@ -38,17 +36,17 @@ public:
         }
         if ( firstValue )
         {
-            valueOpen  = value;
-            valueHigh  = value;
-            valueLow   = value;
+            ohlc.Open  = value;
+            ohlc.High  = value;
+            ohlc.Low   = value;
             firstValue = false;
         }
         else
         {
-            if ( value > valueHigh ) valueHigh = value;
-            if ( value < valueLow  ) valueLow  = value;
+            if ( value > ohlc.High ) ohlc.High = value;
+            if ( value < ohlc.Low  ) ohlc.Low  = value;
         }
-        valueClose = value;
+        ohlc.Close = value;
     }
 
     ~OHLCAggregator ( )
@@ -61,26 +59,23 @@ private:
     void init ( )
     {
         firstValue = true;
-        valueOpen  = 0;
-        valueHigh  = 0;
-        valueLow   = 0;
-        valueClose = 0;
+        ohlc.Open  = 0;
+        ohlc.High  = 0;
+        ohlc.Low   = 0;
+        ohlc.Close = 0;
         timer_ -> restart( );
     }
 
     void print ( )
     {
-        print_function( valueOpen, valueHigh, valueLow, valueClose );
+        print_function( ohlc );
     }
 
-    boost::function<void( double, double, double, double )> print_function;
+    boost::function<void( OHLC_t )> print_function;
     boost::timer * timer_;
     double timeout;
 
-    double valueOpen;
-    double valueHigh;
-    double valueLow;
-    double valueClose;
+    OHLC_t ohlc;
     bool   firstValue;
 };
 
