@@ -15,7 +15,7 @@ void printTime2File ( const double Time )
     std::stringstream msg;
     msg << "Total scope_life time= " << Time << " usecs" << std::endl;
     File out_file( "times.log" );
-    out_file.write( ( msg.str( ) ).c_str( ) );
+    out_file.write( msg.str( ).c_str( ) );
 }
 
 void printOHLC2File ( const OHLC_t ohlc )
@@ -42,7 +42,7 @@ void task1 ( )
 void task2 ( )
 {
     {
-        ScopedTimer timer ( printTime );
+        ScopedTimer timer ( printTime2File );
         for ( int i=0; i < 1000000; i++ ) continue;
     }
     std::cout << "out of scope\n" << std::endl;

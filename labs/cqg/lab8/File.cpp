@@ -17,13 +17,15 @@ public:
 
     ~File ( )
     {
-        fclose( pFile );
+        if ( EOF == fclose( pFile ) )
+            printf( "File closing error\n" );
         printf( "File: destructed\n" );
     }
 
-    int write ( const char * string)
+    void write ( const char * string)
     {
-        fputs( string, pFile );
+        if ( EOF == fputs( string, pFile ) )
+            printf( "File writing error\n" );
     }
 
 private:
