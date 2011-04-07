@@ -18,13 +18,13 @@ void printTime2File ( const double Time )
     out_file.write( msg.str( ).c_str( ) );
 }
 
-void printOHLC2File ( const OHLC_t ohlc )
+void printOHLC2File ( const OHLC_t * ohlc )
 {
     std::stringstream msg;
-    msg << "O= " << ohlc.Open  << ", ";
-    msg << "H= " << ohlc.High  << ", ";
-    msg << "L= " << ohlc.Low   << ", ";
-    msg << "C= " << ohlc.Close << std::endl;
+    msg << "O= " << ohlc->Open  << ", ";
+    msg << "H= " << ohlc->High  << ", ";
+    msg << "L= " << ohlc->Low   << ", ";
+    msg << "C= " << ohlc->Close << std::endl;
     File out_file( "OHLC.log" );
     out_file.write( msg.str( ).data( ) );
 }

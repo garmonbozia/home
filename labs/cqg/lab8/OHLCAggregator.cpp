@@ -18,7 +18,7 @@ struct OHLC_t
 class OHLCAggregator
 {
 public:
-    OHLCAggregator ( void fun ( OHLC_t ), const double timeSec ) : 
+    OHLCAggregator ( void fun ( const OHLC_t * ), const double timeSec ) : 
         timeout( timeSec ),
         print_function( fun ),
         timer_( new boost::timer )
@@ -68,10 +68,10 @@ private:
 
     void print ( )
     {
-        print_function( ohlc );
+        print_function( &ohlc );
     }
 
-    boost::function<void( OHLC_t )> print_function;
+    boost::function<void( const OHLC_t * )> print_function;
     boost::timer * timer_;
     double timeout;
 
