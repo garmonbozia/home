@@ -1,42 +1,61 @@
-#include "stdio.h"
 #include <memory>
+#include <iostream>
+#include <sstream>
+
 #include "ScopedTimer.cpp"
 #include "File.cpp"
 
 void printTime ( const double Time )
 {
-    printf( "Total scope_life time= %0.2f usecs\n", Time );
+    std::cout << "Total scope_life time= " << Time << " usecs" << std::endl;
 }
 
-void printTime2File ( const double Time)
+void printTime2File ( const double Time )
 {
-    char msg [100];
-    sprintf( msg, "Total scope_life time= %0.2f usecs\n", Time );
+    std::stringstream msg;
+    msg << "Total scope_life time= " << Time << " usecs" << std::endl;
     File out_file( "times.log" );
-    out_file.write( msg );
+    out_file.write( msg.str( ).c_str( ) );
 }
 
-int main ( )
+void task1 ( )
 {
-/// task1 (testing ScopedTimer)
+/// (testing ScopedTimer)
     {
-        std::auto_ptr<ScopedTimer> timer( new ScopedTimer ( printTime ) );
+/// in that case it's no benefit using std::auto_ptr
+        //std::auto_ptr<ScopedTimer> timer( new ScopedTimer ( printTime ) );
+        ScopedTimer timer ( printTime );
         for ( int i=0; i < 1000000; i++ ) continue;
     }
-    printf( "out of scope\n\n" );
+    std::cout << "out of scope\n" << std::endl;
+}
 
-/// task2 (testing mIStream)
+void task2 ( )
+{
+/// (testing File)
     {
         File out_file( "output" );
         out_file.write( "test message" );
     }
-    printf( "out of scope\n\n" );
+    std::cout << "out of scope\n" << std::endl;
+}
 
-/// task3 
+void task3 ( )
+{
     {
-        std::auto_ptr<ScopedTimer> timer( new ScopedTimer ( printTime2File ) );
+/// in that case it's no benefit using std::auto_ptr
+        //std::auto_ptr<ScopedTimer> timer( new ScopedTimer ( printTime2File ) );
+        ScopedTimer timer ( printTime2File );
         for ( int i=0; i < 1000000; i++ ) continue;
     }
-    printf( "out of scope\n\n" );
+    std::cout << "out of scope\n" << std::endl;
+}
+
+int main ( )
+{
+    task1( );
+    task2( );
+    task3( );
+
     return 0;
 }
