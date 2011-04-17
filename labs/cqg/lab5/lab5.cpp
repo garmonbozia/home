@@ -1,5 +1,4 @@
 #include <iostream>
-
 #include "wcomplex.h"
 #include "mqueue.h"
 
