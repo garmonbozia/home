@@ -9,6 +9,7 @@
 #include <map>
 #include <algorithm>
 #include <climits>
+#include <set>
 
 using std::cout;
 using std::endl;
@@ -19,6 +20,8 @@ using std::vector;
 using std::pair;
 using std::count;
 using std::find;
+using std::set;
+using std::advance;
 
 class coord_t
 {
@@ -340,67 +343,44 @@ public:
         return( get_active_group_number() - connective_group_number() );
     }
 
+
     bool is_connective_group ( const int group_number )
     {
-        int elem1_num = 0;
-        for ( vector<int>::iterator i_elem1=groups_.begin()
-            ; i_elem1!=groups_.end()
-            ; i_elem1++
-            )
-        {
-            int elem2_num = 0;
-            for ( vector<int>::iterator i_elem2=groups_.begin()
-                ; i_elem2!=groups_.end()
-                ; i_elem2++
-                )
-            {
-                if ( ( (*i_elem1) == group_number ) &&
-                     ( (*i_elem2) == group_number ) &&
-                     ( elem1_num < elem2_num )
-                   )
-                {
-                    vector<int> visited_elements;
-                    if ( !is_connected_elements( group_number
-                                               , elem1_num
-                                               , elem2_num
-                                               , visited_elements )
-                                               )
-                        return false;
-                }
-                elem2_num++;
-            }
-            elem1_num++;
-        }
-        return true;
+		int visited_pointer = 0;
+		int visited_pointer_increase = 0;
+		vector<int> visited;
+		insert( &visited, get_first_group_element( group_number ) );
+		int visited_size_prev;
+		while ( true )
+		{
+			visited_size_prev = visited.size( );
+			set<int> push_in_visited;
+			vector<int>::iterator i_visited = visited.begin();
+			for ( advance( i_visited, visited_pointer )
+				; i_visited!=visited.end()
+				; i_visited++
+				)
+			{
+				for ( vector<int>::iterator i_neighbour=adj_[(*i_visited)].begin()
+					; i_neighbour!=adj_[(*i_visited)].end()
+					; i_neighbour++
+					)
+				{
+					if ( not( is_in_group( (*i_neighbour), group_number ) ) )
+						continue;
+					push_in_visited.insert( (*i_neighbour) );
+				}
+			}
+			insert_from( &visited, &push_in_visited );
+			visited_pointer_increase = visited.size( ) - visited_size_prev;
+			visited_pointer =visited.size() - visited_pointer_increase;
+			if ( !visited_pointer_increase )
+				break;
+		}
+		return ( visited.size() == get_group_size( group_number ) );
     }
 
-    bool is_connected_elements ( int group_number
-                               , int element1
-                               , int element2
-                               , vector<int> visited_elements )
-    {
-        for ( int j=0; j<size_; j++ )
-        {
-            if ( ( groups_[j] == group_number )     &&
-                 //( adjacency_matrix_[element1][j] ) &&
-                 ( exist_edge( element1, j ) ) &&
-                 ( j != element1 )                  &&
-                 ( !member( j, visited_elements ) )
-                )
-                {
-                    if ( j == element2 )
-                        return true;
-                    visited_elements.push_back( j );
-                    return is_connected_elements( group_number
-                                                , j
-                                                , element2
-                                                , visited_elements
-                                                );
-                }
-        }
-    }
-
-    bool member ( int el, vector<int> elements )
+    bool member ( const int el, vector<int> elements )
     {
         return ( find( elements.begin()
                      , elements.end()
@@ -408,12 +388,12 @@ public:
                      ) != elements.end() );
     }
 
-    bool is_in_group ( int el, int group_number )
+    bool is_in_group ( const int el, const int group_number )
     {
-    	return ( el == groups_[group_number] );
+    	return ( group_number == groups_[el] );
     }
 
-    bool exist_edge ( int i, int j )
+    bool exist_edge ( const int i, const int j )
     {
     	return member( j, adj_[i] ) ;
     }
@@ -428,6 +408,63 @@ public:
             if ( (*i_group).second )
                 active_group_number++;
         return active_group_number;
+    }
+
+    int get_first_group_element ( const int group_number )
+    {
+    	return ( find( groups_.begin( )
+    			     , groups_.end( )
+    			     , group_number
+    			     ) - groups_.begin( )
+    	       );
+    }
+
+    int get_group_size ( const int group_number )
+    {
+    	return count( groups_.begin(), groups_.end(), group_number );
+    }
+
+    void show_vector ( vector<int> * v, const char * name )
+    {
+    	cout << name << ": ";
+    	for ( vector<int>::iterator i=v->begin()
+    	    ; i!=v->end()
+    	    ; i++
+    	    )
+    	{
+    		cout << (*i) << " ";
+    	}
+    	cout << endl;
+    }
+
+    void show_set ( set<int> * v, const char * name )
+    {
+    	cout << name << ": ";
+    	for ( set<int>::iterator i=v->begin()
+    	    ; i!=v->end()
+    	    ; i++
+    	    )
+    	{
+    		cout << (*i) << " ";
+    	}
+    	cout << endl;
+    }
+
+    void insert ( vector<int> * v, const int el )
+    {
+    	if ( not( member( el, *v ) ) )
+    		v->push_back( el );
+    }
+
+    void insert_from ( vector<int> * v, set<int> * s )
+    {
+    	for ( set<int>::iterator i_push=s->begin()
+    	    ; i_push!= s->end()
+    	    ; i_push++
+    	    )
+    	{
+    		insert( v, (*i_push) );
+    	}
     }
 
 private:

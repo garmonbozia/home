@@ -40,6 +40,12 @@ int main ( )
 	cout << "min connected or bordered group size= " << max_min_size.min;
 	cout << "(" << max_min_size.index_min << ")" << endl;
 
+	cout << "test for connective group 0= " << graph.is_connective_group( 0 ) << endl;
+	cout << "test for connective group 1= " << graph.is_connective_group( 1 ) << endl;
+	cout << "test for connective group 2= " << graph.is_connective_group( 2 ) << endl;
+	cout << "test for connective group 3= " << graph.is_connective_group( 3 ) << endl;
+	cout << "test for connective group 4= " << graph.is_connective_group( 4 ) << endl;
+
 	//cout << "connective group number= " << graph.connective_group_number( ) << endl;
 	return( 0 );
 }
