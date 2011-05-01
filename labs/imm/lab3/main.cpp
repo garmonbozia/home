@@ -22,30 +22,24 @@ int main ( )
 #endif
 
 	max_min_t<double> max_min_size;
-	max_min_size = graph.max_min_group_size( );
+	max_min_size = graph.maxMinGroupSize();
 	cout << "max group size= " << max_min_size.max;
 	cout << "(" << max_min_size.index_max << ")" << endl;
 	cout << "min group size= " << max_min_size.min;
 	cout << "(" << max_min_size.index_min << ")" << endl;
 
-	max_min_size = graph.max_min_bordered_group_size( );
+	max_min_size = graph.maxMinBorderedGroupSize();
 	cout << "max bordered group size= " << max_min_size.max;
 	cout << "(" << max_min_size.index_max << ")" << endl;
 	cout << "min bordered group size= " << max_min_size.min;
 	cout << "(" << max_min_size.index_min << ")" << endl;
 
-	max_min_size = graph.max_min_connected_or_bordered_group_size( );
+	max_min_size = graph.maxMinConnectedOrBorderedGroupSize();
 	cout << "max connected or bordered group size= " << max_min_size.max;
 	cout << "(" << max_min_size.index_max << ")" << endl;
 	cout << "min connected or bordered group size= " << max_min_size.min;
 	cout << "(" << max_min_size.index_min << ")" << endl;
 
-	cout << "test for connective group 0= " << graph.is_connective_group( 0 ) << endl;
-	cout << "test for connective group 1= " << graph.is_connective_group( 1 ) << endl;
-	cout << "test for connective group 2= " << graph.is_connective_group( 2 ) << endl;
-	cout << "test for connective group 3= " << graph.is_connective_group( 3 ) << endl;
-	cout << "test for connective group 4= " << graph.is_connective_group( 4 ) << endl;
-
-	//cout << "connective group number= " << graph.connective_group_number( ) << endl;
+	cout << "connective group number= " << graph.connectiveGroupNumber( ) << endl;
 	return( 0 );
 }

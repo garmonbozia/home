@@ -9,7 +9,6 @@
 #include <map>
 #include <algorithm>
 #include <climits>
-#include <set>
 
 using std::cout;
 using std::endl;
@@ -20,7 +19,6 @@ using std::vector;
 using std::pair;
 using std::count;
 using std::find;
-using std::set;
 using std::advance;
 
 class coord_t
@@ -124,7 +122,7 @@ public:
         cout << "[OK]" << endl;
     }
 
-    void show_adjacency_matrix ( )
+    void showAdjacencyMatrix ( )
     {
         cout << endl << "* printing adjacency matrix..." << endl;
         cout << " |";
@@ -142,14 +140,14 @@ public:
             for ( int j=0; j<size_; j++ )
             {
                 //cout << adjacency_matrix_[i][j] << " ";
-                cout << static_cast<int>( exist_edge( i, j ) ) << " ";
+                cout << static_cast<int>( existEdge( i, j ) ) << " ";
             }
             cout << endl;
         }
         cout << "* printing adjacency matrix...[OK]" << endl << endl;
     }
 
-    void show_coord ( )
+    void showCoord ( )
     {
         cout << endl << "* printing coordinates..." << endl;
         int i=0;
@@ -170,7 +168,7 @@ public:
         cout << "* printing coordinates... [OK]" << endl << endl;
     }
 
-    void show_groups ( )
+    void showGroups ( )
     {
         cout << endl << "* printing groups..." << endl;
         int i=0;
@@ -185,7 +183,7 @@ public:
         cout << "* printing groups... [OK]" << endl << endl;
     }
 
-    void show_bordered ( )
+    void showBordered ( )
     {
         cout << endl << "* printing bordered elements..." << endl;
         int i=0;
@@ -201,7 +199,7 @@ public:
         cout << "* printing bordered elements... [OK]" << endl << endl;
     }
 
-    max_min_t<double> max_min_group_size ( )
+    max_min_t<double> maxMinGroupSize ( )
     {
         max_min_t<double> max_min_size;
         max_min_size.max = 0;
@@ -229,7 +227,7 @@ public:
         return max_min_size;
     }
 
-    max_min_t<double> max_min_bordered_group_size ( )
+    max_min_t<double> maxMinBorderedGroupSize ( )
     {
         max_min_t<double> max_min_size;
         max_min_size.max = 0;
@@ -270,7 +268,7 @@ public:
         return max_min_size;
     }
 
-    max_min_t<double> max_min_connected_or_bordered_group_size ( )
+    max_min_t<double> maxMinConnectedOrBorderedGroupSize ( )
     {
         max_min_t<double> max_min_size;
         max_min_size.max = 0;
@@ -301,7 +299,7 @@ public:
                     		; j_elem++
                     		)
                     	{
-                    		element_matched = not( is_in_group( (*j_elem ), (*i_group).first ) );
+                    		element_matched = not( isInGroup( (*j_elem ), (*i_group).first ) );
                     	}
                     }
                     if ( element_matched )
@@ -322,7 +320,7 @@ public:
         return max_min_size;
     }
 
-    int connective_group_number ( )
+    int connectiveGroupNumber ( )
     {
         int group_number = 0;
         for ( map<int,bool>::iterator i_group=groups_existance_.begin()
@@ -331,30 +329,30 @@ public:
             )
         {
             if ( ( (*i_group).second) &&
-                 ( is_connective_group( (*i_group).first ))
+                 ( isConnectiveGroup( (*i_group).first ))
                  )
                     group_number++;
         }
         return group_number;
     }
 
-    int nonconnective_group_number ( )
+    int nonconnectiveGroupNumber ( )
     {
-        return( get_active_group_number() - connective_group_number() );
+        return( getActiveGroupNumber() - connectiveGroupNumber() );
     }
 
 
-    bool is_connective_group ( const int group_number )
+    bool isConnectiveGroup ( const int group_number )
     {
 		int visited_pointer = 0;
 		int visited_pointer_increase = 0;
 		vector<int> visited;
-		insert( &visited, get_first_group_element( group_number ) );
+		insert( &visited, getFirstGroupElement( group_number ) );
 		int visited_size_prev;
 		while ( true )
 		{
 			visited_size_prev = visited.size( );
-			set<int> push_in_visited;
+			vector<int> push_in_visited;
 			vector<int>::iterator i_visited = visited.begin();
 			for ( advance( i_visited, visited_pointer )
 				; i_visited!=visited.end()
@@ -366,18 +364,24 @@ public:
 					; i_neighbour++
 					)
 				{
-					if ( not( is_in_group( (*i_neighbour), group_number ) ) )
+					if ( not( isInGroup( (*i_neighbour), group_number ) ) )
 						continue;
-					push_in_visited.insert( (*i_neighbour) );
+					insert( &push_in_visited, (*i_neighbour) );
 				}
 			}
-			insert_from( &visited, &push_in_visited );
+			insertFrom( &visited, &push_in_visited );
 			visited_pointer_increase = visited.size( ) - visited_size_prev;
 			visited_pointer =visited.size() - visited_pointer_increase;
 			if ( !visited_pointer_increase )
 				break;
 		}
-		return ( visited.size() == get_group_size( group_number ) );
+		bool result = ( visited.size() == getGroupSize( group_number ) );
+		cout << "group #" << group_number;
+		if ( result )
+			 cout << " is connective" << endl;
+		else
+			 cout << " is nonconnective" << endl;
+		return result;
     }
 
     bool member ( const int el, vector<int> elements )
@@ -388,17 +392,17 @@ public:
                      ) != elements.end() );
     }
 
-    bool is_in_group ( const int el, const int group_number )
+    bool isInGroup ( const int el, const int group_number )
     {
     	return ( group_number == groups_[el] );
     }
 
-    bool exist_edge ( const int i, const int j )
+    bool existEdge ( const int i, const int j )
     {
     	return member( j, adj_[i] ) ;
     }
 
-    int get_active_group_number ( )
+    int getActiveGroupNumber ( )
     {
         int active_group_number = 0;
         for ( map<int,bool>::iterator i_group=groups_existance_.begin()
@@ -410,7 +414,7 @@ public:
         return active_group_number;
     }
 
-    int get_first_group_element ( const int group_number )
+    int getFirstGroupElement ( const int group_number )
     {
     	return ( find( groups_.begin( )
     			     , groups_.end( )
@@ -419,35 +423,9 @@ public:
     	       );
     }
 
-    int get_group_size ( const int group_number )
+    int getGroupSize ( const int group_number )
     {
     	return count( groups_.begin(), groups_.end(), group_number );
-    }
-
-    void show_vector ( vector<int> * v, const char * name )
-    {
-    	cout << name << ": ";
-    	for ( vector<int>::iterator i=v->begin()
-    	    ; i!=v->end()
-    	    ; i++
-    	    )
-    	{
-    		cout << (*i) << " ";
-    	}
-    	cout << endl;
-    }
-
-    void show_set ( set<int> * v, const char * name )
-    {
-    	cout << name << ": ";
-    	for ( set<int>::iterator i=v->begin()
-    	    ; i!=v->end()
-    	    ; i++
-    	    )
-    	{
-    		cout << (*i) << " ";
-    	}
-    	cout << endl;
     }
 
     void insert ( vector<int> * v, const int el )
@@ -456,9 +434,9 @@ public:
     		v->push_back( el );
     }
 
-    void insert_from ( vector<int> * v, set<int> * s )
+    void insertFrom ( vector<int> * v, vector<int> * s )
     {
-    	for ( set<int>::iterator i_push=s->begin()
+    	for ( vector<int>::iterator i_push=s->begin()
     	    ; i_push!= s->end()
     	    ; i_push++
     	    )
@@ -482,4 +460,3 @@ private:
 };
 
 #endif
-
