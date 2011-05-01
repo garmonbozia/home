@@ -1,7 +1,8 @@
 #include <iostream>
 
 #define DIMENTION_THREE
-#include "jak_grf.h"
+
+#include "jak_grf.hpp"
 
 using std::cout;
 using std::endl;
@@ -10,16 +11,17 @@ int main ( )
 {
 #ifdef DIMENTION_THREE
 	jak_grf graph( "5.ig", "5_border", "5_groupet" );
+	graph.setDimension( three );
 #else
 	jak_grf graph( "6.ig", "6_border", "6_groupet" );
+	graph.setDimension( two );
 #endif
+
 	graph.initial( );
-#ifndef DIMENTION_THREE
-	graph.show_adjacency_matrix( );
-	graph.show_coord( );
-	graph.show_groups( );
-	graph.show_bordered( );
-#endif
+	graph.showAdjacencyMatrix( );
+	graph.showCoord( );
+	graph.showGroups( );
+	graph.showBordered( );
 
 	max_min_t<double> max_min_size;
 	max_min_size = graph.maxMinGroupSize();
