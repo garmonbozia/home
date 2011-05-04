@@ -47,14 +47,12 @@ public:
 		bits_to_follow = 0;
 
 		adaptive    = false;
-		with_memory = false;
 	}
 
 	void initial ( task_t * task_in )
 	{
 		task        = task_in;
 		adaptive    = task->adaptive;
-		with_memory = task->with_memory;
 		if ( (in=fopen( task->file_in,"r+b" ))==NULL )
 		{
 			cout << endl << "Incorrect input file" << endl;
@@ -75,31 +73,30 @@ public:
 
 	void start_model ( )
 	{ // изначально все символы в сообщении считаем равновероятными
-		int i;
-		for ( i=0; i<=NO_OF_SYMBOLS; i++ )
-			cum_freq[0][i] = i;
+		for ( int i=0; i<=NO_OF_SYMBOLS; i++ )
+			cum_freq[i] = i;
 	}
 
 	void update_model ( const int symbol )
 	{
 	/// если произошло переполнение
-		if ( cum_freq[0][NO_OF_SYMBOLS] == MAX_FREQUENCY )
+		if ( cum_freq[NO_OF_SYMBOLS] == MAX_FREQUENCY )
 		{
 			for ( int i=0; i<=NO_OF_SYMBOLS; i++ )
 	/// нормализация (делим все частоты на 2)
-				cum_freq[0][i] = cum_freq[0][i] >> 1;
+				cum_freq[i] = cum_freq[i] >> 1;
 	/// для нестационарных входных последовательностей
 			for ( int i=1; i<=NO_OF_SYMBOLS; i++ )
 			{
-				if ( cum_freq[0][i]<=cum_freq[0][i-1] )
+				if ( cum_freq[i]<=cum_freq[i-1] )
 				{
-					cum_freq[0][i] = cum_freq[0][i-1] + 1;
+					cum_freq[i] = cum_freq[i-1] + 1;
 				}
 			}
 		}
 	/// увеличивается частота symbol'а
 		for ( int i=symbol+1; i<=NO_OF_SYMBOLS; i++ )
-			cum_freq[0][i]++;
+			cum_freq[i]++;
 	}
 
 	int input_bit ( ) // ввод 1 бита из сжатого файла
@@ -188,8 +185,8 @@ public:
 		// пересчет границ интервала
 		unsigned long range;
 		range = high - low + 1;
-		high  = low	+ range * cum_freq[0][symbol+1] / cum_freq[0][NO_OF_SYMBOLS] - 1;
-		low	  = low	+ range * cum_freq[0][symbol]   / cum_freq[0][NO_OF_SYMBOLS];
+		high  = low	+ range * cum_freq[symbol+1] / cum_freq[NO_OF_SYMBOLS] - 1;
+		low	  = low	+ range * cum_freq[symbol]   / cum_freq[NO_OF_SYMBOLS];
 		// далее при необходимости — вывод бита или меры от зацикливания
 		for ( ; ; )
 		{
@@ -227,12 +224,12 @@ public:
 		range = high - low + 1;
 		// число cum - это число value, пересчитанное из интервала
 		// low..high в интервал 0..CUM_FREQUENCY[NO_OF_SYMBOLS]
-		cum = ((value - low + 1) * cum_freq[0][NO_OF_SYMBOLS] - 1) / range;
+		cum = ((value - low + 1) * cum_freq[NO_OF_SYMBOLS] - 1) / range;
 		// поиск интервала, соответствующего числу cum
-		for (symbol = 0; cum_freq[0][symbol+1] <= cum; symbol++);
+		for (symbol = 0; cum_freq[symbol+1] <= cum; symbol++);
 		// пересчет границ
-		high = low + range * cum_freq[0][symbol+1] / cum_freq[0][NO_OF_SYMBOLS] - 1;
-		low  = low + range * cum_freq[0][symbol]   / cum_freq[0][NO_OF_SYMBOLS];
+		high = low + range * cum_freq[symbol+1] / cum_freq[NO_OF_SYMBOLS] - 1;
+		low  = low + range * cum_freq[symbol]   / cum_freq[NO_OF_SYMBOLS];
 		for ( ; ; )
 		{	// подготовка к декодированию следующих символов
 			if ( high < HALF ) {/* cтаршие биты low и high - нулевые */}
@@ -260,21 +257,23 @@ public:
 	void encode ( )
 	{
 		int symbol;
+		int symbol_previous;
 		start_model( );
 		start_encoding( );
 		while ( (symbol = getc(in)) != EOF )
 		{
-			encode_symbol( symbol );
+            encode_symbol( symbol );
 			if ( adaptive )
 				update_model( symbol );
 		}
-		encode_symbol( EOF_SYMBOL );
+        encode_symbol( EOF_SYMBOL );
 		done_encoding( );
 	}
 
 	void decode(void)
 	{
 		int symbol;
+		int symbol_previous;
 		start_model( );
 		start_decoding( );
 		while ( (symbol=decode_symbol()) != EOF_SYMBOL )
@@ -290,7 +289,7 @@ private:
 	int	          buffer, bits_to_go, garbage_bits, bits_to_follow;
 
 	//интервалы частот символов
-	unsigned int cum_freq[NO_OF_SYMBOLS + 1][NO_OF_SYMBOLS + 1];
+	unsigned int cum_freq[NO_OF_SYMBOLS + 1];
 	// относительная частота появления символа s (оценка вероятности его появления)
 	// определяется как p(s)=(cum_freq[s+1]-cum_freq[s])/cum_freq[NO_OF_SYMBOLS]
 
