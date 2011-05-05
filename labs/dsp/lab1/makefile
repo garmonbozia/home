@@ -44,7 +44,7 @@ F_ADAPTIVE:=-a
 F_WITH_MEMORY:=-m
 
 c_compile:
-	g++ -o main main.cpp arcode.cpp
+	g++ -o main main.cpp arcode.cpp -I .
 	
 c_run_encode:
 	./main -e -i abcd -o output $(F_ADAPTIVE) $(F_WITH_MEMORY)

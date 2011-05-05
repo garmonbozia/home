@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "arcode.cpp"
+#include "arcode.hpp"
 
 using std::cout;
 using std::endl;
