@@ -1,6 +1,7 @@
 #include <iostream>
+#include <stdlib.h>
 
-#include "arcode.hpp"
+#include "model_t.hpp"
 
 using std::cout;
 using std::endl;
@@ -11,7 +12,6 @@ task_t get_opt ( int argc, char **argv )
 	int option;
 	task.adaptive    = false;
 	task.with_memory = false;
-	task.with_model  = false;
 	while ( (option=getopt(argc,argv,"i:o:s:deam")) != -1 )
 	{
 		switch ( option )
@@ -21,19 +21,6 @@ task_t get_opt ( int argc, char **argv )
 			break;
 		case 'o':
 			task.file_out   = optarg;
-			break;
-		case 's':
-			task.with_model = true;
-			task.file_model = optarg;
-			break;
-		case 'e':
-			task.mode = task_t::encoding;
-			break;
-		case 'd':
-			task.mode = task_t::decoding;
-			break;
-		case 'a':
-			task.adaptive = true;
 			break;
 		case 'm':
 			task.with_memory = true;
@@ -50,8 +37,10 @@ int main ( int argc, char **argv )
 {
 	task_t task = get_opt( argc, argv );
 
-	arcode_t arcode;
-	arcode.initial( &task );
-
+	model_t model;
+	model.generate( &task );
+	model.gen_prob( );
+	//model.show_prob( );
+	cout << model.get_entropy( ) << endl;
 	return 0;
 }

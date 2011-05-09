@@ -27,6 +27,12 @@ void arcode_t::initial ( task_t * task_in )
 	task        = task_in;
 	adaptive    = task->adaptive;
 	with_memory = task->with_memory;
+	if ( adaptive )
+		//cout << "adaptive " << endl;
+	if ( with_memory )
+	{
+		//cout << "memory " << endl;
+	}
 	if ( (in=fopen( task->file_in,"r+b" ))==NULL )
 	{
 		cout << endl << "Incorrect input file" << endl;
@@ -37,6 +43,15 @@ void arcode_t::initial ( task_t * task_in )
 		cout << endl << "Incorrect output file" << endl;
 		exit( 1 );
 	}
+	if ( task->with_model )
+	{
+		cout << "have a base statistic file" << endl;
+		if ( (model=fopen( task->file_model,"r+b" ))==NULL )
+			{
+				cout << endl << "Incorrect model file" << endl;
+				exit( 1 );
+			}
+	}
 	if ( task->mode == task_t::encoding )
 		encode( );
 	else
@@ -46,9 +61,18 @@ void arcode_t::initial ( task_t * task_in )
 }
 
 void arcode_t::start_model ( )
-{ // изначально все символы в сообщении считаем равновероятными
+{
+/// изначально все символы в сообщении считаем равновероятными
 	for ( int i=0; i<=NO_OF_SYMBOLS; i++ )
 		cum_freq[i] = i;
+}
+
+void arcode_t::start_model_with_memory ( )
+{
+/// изначально все символы в сообщении считаем равновероятными
+	for ( int i=0; i<NO_OF_SYMBOLS; i++)
+		for ( int j=0; j<=NO_OF_SYMBOLS; j++)
+			cum_freq_with_memory[i][j]=j;
 }
 
 void arcode_t::update_model ( const int symbol )
@@ -61,36 +85,52 @@ void arcode_t::update_model ( const int symbol )
 			cum_freq[i] = cum_freq[i] >> 1;
 /// для нестационарных входных последовательностей
 		for ( int i=1; i<=NO_OF_SYMBOLS; i++ )
-		{
 			if ( cum_freq[i]<=cum_freq[i-1] )
-			{
 				cum_freq[i] = cum_freq[i-1] + 1;
-			}
-		}
 	}
 /// увеличивается частота symbol'а
 	for ( int i=symbol+1; i<=NO_OF_SYMBOLS; i++ )
 		cum_freq[i]++;
 }
 
-int arcode_t::input_bit ( ) // ввод 1 бита из сжатого файла
+void arcode_t::update_model_with_memory ( const int symbol, const int symbol_prev=0 )
+{
+/// если произошло переполнение
+	if ( cum_freq_with_memory[symbol_prev][NO_OF_SYMBOLS]==MAX_FREQUENCY )
+	{
+		for ( int i=0; i<=NO_OF_SYMBOLS; i++ )
+/// нормализация (делим все частоты на 2)
+			cum_freq_with_memory[symbol_prev][i] = cum_freq_with_memory[symbol_prev][i]>>1;
+/// для нестационарных входных последовательностей
+		for ( int i=1; i<= NO_OF_SYMBOLS; i++ )
+			if ( cum_freq_with_memory[symbol_prev][i] <= cum_freq_with_memory[symbol_prev][i-1])
+				cum_freq_with_memory[symbol_prev][i] = cum_freq_with_memory[symbol_prev][i-1]+1;
+	}
+/// увеличивается частота symbol'а
+	for ( int i=symbol+1; i<=NO_OF_SYMBOLS; i++ )
+		cum_freq_with_memory[symbol_prev][i]++;
+}
+
+int arcode_t::input_bit ( )
+/// ввод 1 бита из сжатого файла
 {
 	int t;
 	if ( 0 == bits_to_go )
 	{
-		buffer = getc(in);	// заполняем буфер битового ввода
-		if ( buffer == EOF )	// входной поток сжатых данных исчерпан
+		buffer = getc(in);		/// заполняем буфер битового ввода
+		if ( buffer == EOF )	/// входной поток сжатых данных исчерпан
 		{
-			// Причина попытки дальнейшего чтения: следующим
-			// декодируемым символом должен быть EOF_SYMBOL,
-			// но декодер об этом пока не знает и может готовиться
-			// к дальнейшему декодированию, втягивая новые биты
-			// (см. цикл for(;;) в процедуре decode_symbol). Эти
-			// биты — "мусор", реально не несут никакой
-			// информации и их можно выдать любыми
+/// Причина попытки дальнейшего чтения: следующим
+/// декодируемым символом должен быть EOF_SYMBOL,
+/// но декодер об этом пока не знает и может готовиться
+/// к дальнейшему декодированию, втягивая новые биты
+/// (см. цикл for(;;) в процедуре decode_symbol). Эти
+/// биты — "мусор", реально не несут никакой
+/// информации и их можно выдать любыми
 			garbage_bits++;
 			if ( garbage_bits > BITS_IN_REGISTER - 2 )
-			{	// больше максимально возможного числа мусорных битов
+			{
+			/// больше максимально возможного числа мусорных битов
 				printf( "ERROR IN COMPRESSED FILE ! \n" );
 				exit( -1 );
 			}
@@ -105,17 +145,21 @@ int arcode_t::input_bit ( ) // ввод 1 бита из сжатого файл�
 	return t;
 }
 
-void arcode_t::output_bit ( int bit ) // вывод одного бита в сжатый файл
+void arcode_t::output_bit ( int bit )
+/// вывод одного бита в сжатый файл
 {
-	buffer = (buffer>>1) + (bit<<7); // в битовый буфер (один байт)
+	buffer = (buffer>>1) + (bit<<7);
+/// в битовый буфер (один байт)
 	bits_to_go--;
-	if ( bits_to_go == 0 ) // битовый буфер заполнен, сброс буфера
+	if ( bits_to_go == 0 )
+/// битовый буфер заполнен, сброс буфера
 	{
 		putc( buffer, out );
 		bits_to_go = 8;
 	}
 }
-void arcode_t::output_bit_plus_follow ( int bit ) // вывод одного очередного бита и тех, которые были отложены
+void arcode_t::output_bit_plus_follow ( int bit )
+/// вывод одного очередного бита и тех, которые были отложены
 {
 	output_bit( bit );
 	while ( bits_to_follow > 0 )
@@ -127,10 +171,10 @@ void arcode_t::output_bit_plus_follow ( int bit ) // вывод одного о�
 
 void arcode_t::start_encoding ( )
 {
-	bits_to_go		= 8;				// свободно бит в битовом буфере вывода
-	bits_to_follow	= 0;				// число бит, вывод которых отложен
-	low				= 0;				// нижняя граница интервала
-	high			= TOP_VALUE;		// верхняя граница интервала
+	bits_to_go		= 8;				/// свободно бит в битовом буфере вывода
+	bits_to_follow	= 0;				/// число бит, вывод которых отложен
+	low				= 0;				/// нижняя граница интервала
+	high			= TOP_VALUE;		/// верхняя граница интервала
 }
 void arcode_t::done_encoding ()
 {
@@ -139,55 +183,96 @@ void arcode_t::done_encoding ()
 		output_bit_plus_follow( 0 );
 	else
 		output_bit_plus_follow( 1 );
-	putc( buffer>>bits_to_go, out ); // записать незаполненный буфер
+	putc( buffer>>bits_to_go, out ); 	/// записать незаполненный буфер
 }
 
 void arcode_t::start_decoding ( )
 {
 	int i;
-	bits_to_go	 = 0;				// свободно бит в битовом буфере ввода
-	garbage_bits = 0;				// контроль числа "мусорных" бит в конце сжатого файла
-	low			 = 0;				// нижняя граница интервала
-	high		 = TOP_VALUE;		// верхняя граница интервала
-	value		 = 0;				// "ЧИСЛО"
+	bits_to_go	 = 0;				/// свободно бит в битовом буфере ввода
+	garbage_bits = 0;				/// контроль числа "мусорных" бит в конце сжатого файла
+	low			 = 0;				/// нижняя граница интервала
+	high		 = TOP_VALUE;		/// верхняя граница интервала
+	value		 = 0;				/// "ЧИСЛО"
 	for ( i=0; i<BITS_IN_REGISTER; i++ )
 	  value = (value<<1) + input_bit( );
 }
 
 void arcode_t::encode_symbol ( const int symbol )
 {
-	// пересчет границ интервала
+/// пересчет границ интервала
 	unsigned long range;
 	range = high - low + 1;
 	high  = low	+ range * cum_freq[symbol+1] / cum_freq[NO_OF_SYMBOLS] - 1;
 	low	  = low	+ range * cum_freq[symbol]   / cum_freq[NO_OF_SYMBOLS];
-	// далее при необходимости — вывод бита или меры от зацикливания
+/// далее при необходимости — вывод бита или меры от зацикливания
 	for ( ; ; )
 	{
-		assert( low <= high ); // Замечание: всегда low < high (?)
-		if ( high < HALF )    // Старшие биты low и high — нулевые (оба)
-			output_bit_plus_follow( 0 ); //вывод совпадающего старшего бита
-		else if ( low >= HALF )         // старшие биты low и high - единичные
+		assert( low <= high ); /// Замечание: всегда low < high (?)
+		if ( high < HALF )     /// Старшие биты low и high — нулевые (оба)
+			output_bit_plus_follow( 0 ); ///вывод совпадающего старшего бита
+		else if ( low >= HALF )          /// старшие биты low и high - единичные
 		{
-			output_bit_plus_follow( 1 ); // вывод старшего бита
-			low  -= HALF;				 // сброс старшего бита в 0
-			high -= HALF;				 // сброс старшего бита в 0
+			output_bit_plus_follow( 1 ); /// вывод старшего бита
+			low  -= HALF;				 /// сброс старшего бита в 0
+			high -= HALF;				 /// сброс старшего бита в 0
 		}
 		else if ( (low >= FIRST_QTR) && (high < THIRD_QTR) )
-		{/* возможно зацикливание, т.к.
-			HALF <= high < THIRD_QTR,	i.e. high=10...
-			FIRST_QTR <= low < HALF,	i.e. low =01...
-			выбрасываем второй по старшинству бит	*/
-			high -= FIRST_QTR;		// high	=01...
-			low -= FIRST_QTR;		// low	=00...
-			bits_to_follow++;		//откладываем вывод (еще) одного бита
-			// младший бит будет втянут далее
+		{
+/// возможно зацикливание, т.к.
+/// HALF <= high < THIRD_QTR,	i.e. high=10...
+/// FIRST_QTR <= low < HALF,	i.e. low =01...
+/// выбрасываем второй по старшинству бит
+			high -= FIRST_QTR;		/// high	=01...
+			low -= FIRST_QTR;		/// low	=00...
+			bits_to_follow++;		/// откладываем вывод (еще) одного бита
+			/// младший бит будет втянут далее
 		}
-		else break;		// втягивать новый бит рано
-		// старший бит в low и high нулевой, втягиваем новый бит в младший разряд
-		low  <<= 1;	// втягиваем 0
+		else break;		/// втягивать новый бит рано
+		/// старший бит в low и high нулевой, втягиваем новый бит в младший разряд
+		low  <<= 1;		/// втягиваем 0
 		high <<= 1;
-		high++;		// втягиваем 1
+		high++;			/// втягиваем 1
+	}
+}
+
+void arcode_t::encode_symbol_with_memory ( const int symbol, const int symbol_prev )
+{
+/// пересчет границ интервала
+	unsigned long range;
+	range = high - low + 1;
+	high = low	+ range * cum_freq_with_memory[symbol_prev][symbol+1] /
+							  cum_freq_with_memory[symbol_prev][NO_OF_SYMBOLS]-1;
+	low	 = low	+ range * cum_freq_with_memory[symbol_prev][symbol] /
+							  cum_freq_with_memory[symbol_prev][NO_OF_SYMBOLS];
+/// далее при необходимости — вывод бита или меры от зацикливания
+	for ( ; ; )
+	{
+		assert( low <= high ); /// Замечание: всегда low < high (?)
+		if ( high < HALF )     /// Старшие биты low и high — нулевые (оба)
+			output_bit_plus_follow( 0 ); ///вывод совпадающего старшего бита
+		else if ( low >= HALF )          /// старшие биты low и high - единичные
+		{
+			output_bit_plus_follow( 1 ); /// вывод старшего бита
+			low  -= HALF;				 /// сброс старшего бита в 0
+			high -= HALF;				 /// сброс старшего бита в 0
+		}
+		else if ( (low >= FIRST_QTR) && (high < THIRD_QTR) )
+		{
+/// возможно зацикливание, т.к.
+/// HALF <= high < THIRD_QTR,	i.e. high=10...
+/// FIRST_QTR <= low < HALF,	i.e. low =01...
+/// выбрасываем второй по старшинству бит
+			high -= FIRST_QTR;		/// high	=01...
+			low -= FIRST_QTR;		/// low	=00...
+			bits_to_follow++;		///откладываем вывод (еще) одного бита
+			/// младший бит будет втянут далее
+		}
+		else break;		/// втягивать новый бит рано
+		/// старший бит в low и high нулевой, втягиваем новый бит в младший разряд
+		low  <<= 1;	/// втягиваем 0
+		high <<= 1;
+		high++;		/// втягиваем 1
 	}
 }
 
@@ -196,51 +281,114 @@ int arcode_t::decode_symbol ( )
 	unsigned long range, cum;
 	int symbol;
 	range = high - low + 1;
-	// число cum - это число value, пересчитанное из интервала
-	// low..high в интервал 0..CUM_FREQUENCY[NO_OF_SYMBOLS]
+/// число cum - это число value, пересчитанное из интервала
+/// low..high в интервал 0..CUM_FREQUENCY[NO_OF_SYMBOLS]
 	cum = ((value - low + 1) * cum_freq[NO_OF_SYMBOLS] - 1) / range;
-	// поиск интервала, соответствующего числу cum
-	for (symbol = 0; cum_freq[symbol+1] <= cum; symbol++);
-	// пересчет границ
+/// поиск интервала, соответствующего числу cum
+///  пересчет границ
+	for ( symbol=0; cum_freq[symbol+1]<=cum; symbol++ );
 	high = low + range * cum_freq[symbol+1] / cum_freq[NO_OF_SYMBOLS] - 1;
 	low  = low + range * cum_freq[symbol]   / cum_freq[NO_OF_SYMBOLS];
 	for ( ; ; )
-	{	// подготовка к декодированию следующих символов
-		if ( high < HALF ) {/* cтаршие биты low и high - нулевые */}
+	{
+/// подготовка к декодированию следующих символов
+		if ( high < HALF )
+		{
+/// cтаршие биты low и high - нулевые
+		}
 		else if ( low >= HALF )
-		{	// cтаршие биты low и high - единичные, сбрасываем
+		{
+/// cтаршие биты low и high - единичные, сбрасываем
 			value -= HALF;
 			low   -= HALF;
 			high  -= HALF;
 		}
 		else if ( (low >= FIRST_QTR) && (high < THIRD_QTR) )
-		{	// поступаем так же, как при кодировании
+		{
+/// поступаем так же, как при кодировании
 			value -= FIRST_QTR;
 			low   -= FIRST_QTR;
 			high  -= FIRST_QTR;
 		}
-		else break;	// втягивать новый бит рано
-		low  <<= 1; // втягиваем новый бит 0
+		else break;	/// втягивать новый бит рано
+		low  <<= 1; /// втягиваем новый бит 0
 		high <<= 1;
-		high++;	// втягиваем новый бит 1
-		value = (value<<1) + input_bit( ); // втягиваем новый бит информации
-  }
-	  return symbol;
+		high++;	    /// втягиваем новый бит 1
+		value = (value<<1) + input_bit( ); /// втягиваем новый бит информации
+	}
+	return symbol;
+}
+
+int arcode_t::decode_symbol_with_memory ( const int symbol_prev )
+{
+	unsigned long range, cum;
+	int symbol;
+	range = high - low + 1;
+/// число cum - это число value, пересчитанное из интервала
+/// low..high в интервал 0..CUM_FREQUENCY[NO_OF_SYMBOLS]
+	cum = ((value - low + 1) * cum_freq_with_memory[symbol_prev][NO_OF_SYMBOLS] - 1) / range;
+/// поиск интервала, соответствующего числу cum
+/// пересчет границ
+	for ( symbol=0; cum_freq_with_memory[symbol_prev][symbol+1]<=cum; symbol++ );
+	high = low	+ range * cum_freq_with_memory[symbol_prev][symbol+1] /
+						  cum_freq_with_memory[symbol_prev][NO_OF_SYMBOLS]-1;
+	low	 = low	+ range * cum_freq_with_memory[symbol_prev][symbol] /
+						  cum_freq_with_memory[symbol_prev][NO_OF_SYMBOLS];
+	for ( ; ; )
+	{
+/// подготовка к декодированию следующих символов
+		if ( high < HALF )
+		{
+/// cтаршие биты low и high - нулевые
+		}
+		else if ( low >= HALF )
+		{
+/// cтаршие биты low и high - единичные, сбрасываем
+			value -= HALF;
+			low   -= HALF;
+			high  -= HALF;
+		}
+		else if ( (low >= FIRST_QTR) && (high < THIRD_QTR) )
+		{
+/// поступаем так же, как при кодировании
+			value -= FIRST_QTR;
+			low   -= FIRST_QTR;
+			high  -= FIRST_QTR;
+		}
+		else break;	/// втягивать новый бит рано
+		low  <<= 1; /// втягиваем новый бит 0
+		high <<= 1;
+		high++;	    /// втягиваем новый бит 1
+		value = (value<<1) + input_bit( ); /// втягиваем новый бит информации
+	}
+	return symbol;
 }
 
 void arcode_t::encode ( )
 {
 	int symbol;
-	int symbol_previous;
-	start_model( );
+	int symbol_prev = 0;
+	( with_memory ) ? start_model_with_memory( ) : start_model( );
 	start_encoding( );
 	while ( (symbol = getc(in)) != EOF )
 	{
-		encode_symbol( symbol );
+		if ( with_memory )
+			encode_symbol_with_memory( symbol, symbol_prev );
+		else
+			encode_symbol( symbol );
 		if ( adaptive )
-			update_model( symbol );
+		{
+			if ( with_memory )
+				update_model_with_memory( symbol, symbol_prev );
+			else
+				update_model( symbol );
+		}
+		symbol_prev = symbol;
 	}
-	encode_symbol( EOF_SYMBOL );
+	if ( with_memory )
+		encode_symbol_with_memory( EOF_SYMBOL, symbol_prev );
+	else
+		encode_symbol( EOF_SYMBOL );
 	done_encoding( );
 }
 
@@ -248,12 +396,25 @@ void arcode_t::decode ( )
 {
 	int symbol;
 	int symbol_previous;
-	start_model( );
+	( with_memory ) ? start_model_with_memory( ) : start_model( );
 	start_decoding( );
-	while ( (symbol=decode_symbol()) != EOF_SYMBOL )
+	if ( with_memory )
 	{
-		if ( adaptive )
-			update_model( symbol );
-		putc( symbol, out );
+		while ( (symbol=decode_symbol_with_memory( symbol_previous )) != EOF_SYMBOL )
+		{
+			if ( adaptive )
+				update_model_with_memory( symbol, symbol_previous );
+			putc( symbol, out );
+			symbol_previous = symbol;
+		}
+	}
+	else
+	{
+		while ( (symbol=decode_symbol()) != EOF_SYMBOL )
+		{
+			if ( adaptive )
+				update_model( symbol );
+			putc( symbol, out );
+		}
 	}
 }
