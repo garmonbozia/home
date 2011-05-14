@@ -1,5 +1,5 @@
 compile:
-	g++ -o prog main.cpp
+	g++ -o prog main.cpp jak_grf.cpp -I.
 
 run:
 	time( ./prog )
